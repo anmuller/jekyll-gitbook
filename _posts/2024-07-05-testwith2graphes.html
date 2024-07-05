@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js" charset="utf-8"></script>
+</head>
+
+<body>
+    <h3>Bienvenue sur le site</h3>
+    <input type="file" id="csvFileInput" accept=".csv" />
+    <button id="clearButton">Clear User Traces</button>
+    <div id="tester" style="width:600px;height:300px;border:1px solid black;"></div>
+    <div id="tester2" style="width:600px;height:300px;border:1px solid black;margin-top:20px;"></div>
+
+    <script>
+        let userTraceIndices1 = [];
+        let userTraceIndices2 = [];
+
+        document.getElementById('csvFileInput').addEventListener('change', function(event) {
+            var file = event.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var contents = e.target.result;
+                    parseCSV(contents);
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        document.getElementById('clearButton').addEventListener('click', function() {
+            clearUserTraces();
+        });
+
+        function parseCSV(contents) {
+            Papa.parse(contents, {
+                header: true,
+                complete: function(results) {
+                    plotData(results.data);
+                },
+                error: function(error) {
+                    console.error("Error parsing CSV file:", error);
+                }
+            });
+        }
+
+        function plotData(data) {
+            let x = data.map(row => row.x);
+            let y = data.map(row => row.y);
+
+            var trace1 = {
+                x: x,
+                y: y,
+                mode: 'lines+markers',
+                type: 'scatter'
+            };
+
+            var trace2 = {
+                x: y,
+                y: x,
+                mode: 'lines+markers',
+                type: 'scatter'
+            };
+
+            // Add traces and store their indices
+            Plotly.addTraces('tester', trace1).then((graphDiv) => {
+                userTraceIndices1.push(graphDiv.data.length - 1);
+            });
+
+            Plotly.addTraces('tester2', trace2).then((graphDiv) => {
+                userTraceIndices2.push(graphDiv.data.length - 1);
+            });
+        }
+
+        function clearUserTraces() {
+            Plotly.deleteTraces('tester', userTraceIndices1);
+            Plotly.deleteTraces('tester2', userTraceIndices2);
+            userTraceIndices1 = [];
+            userTraceIndices2 = [];
+        }
+
+        function loadCSV(url, callback) {
+            Papa.parse(url, {
+                download: true,
+                header: true,
+                complete: function(results) {
+                    callback(results.data);
+                },
+                error: function(error) {
+                    console.error("Error loading CSV file:", error);
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            let csvUrl = 'https://raw.githubusercontent.com/anmuller/site_java/bbb02de5da18f9277f11219c62af7e7db02bb81c/example.csv';
+
+            loadCSV(csvUrl, function(data) {
+                let x = data.map(row => row.x);
+                let y = data.map(row => row.y);
+
+                var trace1 = {
+                    x: x,
+                    y: y,
+                    mode: 'lines+markers',
+                    type: 'scatter'
+                };
+
+                var trace2 = {
+                    x: y,
+                    y: x,
+                    mode: 'lines+markers',
+                    type: 'scatter'
+                };
+
+                var layout1 = {
+                    title: 'Graphique X en fonction de Y',
+                    xaxis: {
+                        title: 'X'
+                    },
+                    yaxis: {
+                        title: 'Y'
+                    }
+                };
+
+                var layout2 = {
+                    title: 'Graphique Y en fonction de X',
+                    xaxis: {
+                        title: 'Y'
+                    },
+                    yaxis: {
+                        title: 'X'
+                    }
+                };
+
+                Plotly.newPlot('tester', [trace1], layout1);
+                Plotly.newPlot('tester2', [trace2], layout2);
+            });
+        });
+    </script>
+
+    <h3>Fin du tracé</h3>
+</body>
+</html>
